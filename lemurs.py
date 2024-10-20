@@ -17,7 +17,7 @@ def open_home_page():
 
     home_window.config(bg=bg_color)
 
-    left_frame = tk.Frame(home_window, bg=left_frame_color, width=320)  
+    left_frame = tk.Frame(home_window, bg=left_frame_color, width=1)  
     left_frame.pack(side="left", fill="y")  
 
     # Heading for left frame
@@ -25,38 +25,29 @@ def open_home_page():
     label_books.pack(pady=20)
 
     # Buttons for left frame
-    button_add_book = tk.Button(left_frame, text="Add Book", font=("Helvetica", 12), bg=button_color, fg="white", borderwidth=2, relief="flat", padx=10, pady=5)
+    button_add_book = tk.Button(left_frame, text="List Books", font=("Helvetica", 12), bg=button_color, fg="white", borderwidth=2, relief="flat", padx=10, pady=5)
     button_add_book.pack(pady=10, padx=10, fill="x")
 
-    button_search_book = tk.Button(left_frame, text="Search Book", font=("Helvetica", 12), bg=button_color, fg="white", borderwidth=2, relief="flat", padx=10, pady=5)
-    button_search_book.pack(pady=10, padx=10, fill="x")
-
-    button_assign_book = tk.Button(left_frame, text="Assign Book", font=("Helvetica", 12), bg=button_color, fg="white", borderwidth=2, relief="flat", padx=10, pady=5)
+    button_assign_book = tk.Button(left_frame, text="Create Book", font=("Helvetica", 12), bg=button_color, fg="white", borderwidth=2, relief="flat", padx=10, pady=5)
     button_assign_book.pack(pady=10, padx=10, fill="x")
 
-    button_remove_book = tk.Button(left_frame, text="Remove Book", font=("Helvetica", 12), bg=button_color, fg="white", borderwidth=2, relief="flat", padx=10, pady=5)
-    button_remove_book.pack(pady=10, padx=10, fill="x")
+    # Create Frames for layout
+    remaining_frame = tk.Frame(root, bg=bg_color)
+    remaining_frame.pack(fill='both', expand=True)
+    
+    # Grid-based layout for the remaining_frame
+    for i in range(3):
+        remaining_frame.grid_columnconfigure(i, weight=1)
+    for i in range(3):
+        remaining_frame.grid_rowconfigure(i, weight=1)
 
-    # Right Frame (Admin) - fixed width
-    right_frame = tk.Frame(home_window, bg=right_frame_color, width=320)  
-    right_frame.pack(side="right", fill="y")  
+    # Add rectangles with labels within and below them
+    for i in range(3):
+        for j in range(3):
+            rect_label = tk.Label(remaining_frame, text=f"Rectangle {i}{j}", font=("Helvetica", 10), bg="white", fg="black")
+            rect_label.grid(row=i, column=j, padx=10, pady=10, sticky="nsew")
 
-    # Heading for right frame
-    label_admin = tk.Label(right_frame, text="Admin", font=("Helvetica", 16, "bold"), bg=right_frame_color, fg=text_color)
-    label_admin.pack(pady=20)
-
-    # Buttons for right frame
-    button_add_customer = tk.Button(right_frame, text="Add Customer", font=("Helvetica", 12), bg=button_color, fg="white", borderwidth=2, relief="flat", padx=10, pady=5)
-    button_add_customer.pack(pady=10, padx=10, fill="x")
-
-    button_search_customer = tk.Button(right_frame, text="Search Customer", font=("Helvetica", 12), bg=button_color, fg="white", borderwidth=2, relief="flat", padx=10, pady=5)
-    button_search_customer.pack(pady=10, padx=10, fill="x")
-
-    button_remove_customer = tk.Button(right_frame, text="Remove Customer", font=("Helvetica", 12), bg=button_color, fg="white", borderwidth=2, relief="flat", padx=10, pady=5)
-    button_remove_customer.pack(pady=10, padx=10, fill="x")
-
-    button_logout = tk.Button(right_frame, text="Logout", font=("Helvetica", 12), bg=button_color, fg="white", borderwidth=2, relief="flat", padx=10, pady=5)
-    button_logout.pack(pady=10, padx=10, fill="x")
+    home_window.mainloop()
 
 # Main Login Function
 def login():
@@ -78,9 +69,9 @@ root.title("Library Management System - Login")
 root.geometry("800x500")  
 
 #color 
-bg_color = "#E8F0F2"
-fg_color = "#333333"
-button_color = "#00796B"
+bg_color = "#F2E5BF"
+fg_color = "#257180"
+button_color = "#257180"
 
 root.config(bg=bg_color)
 
