@@ -12,7 +12,9 @@ COLORS = {
 WINDOW_DIMENSIONS = {
     "login": (600, 400),
     "home": (1000, 700),
-    "create_book": (500, 500)
+    "create_book": (500, 500),
+    "view_book": (500, 500),
+    "issue_book": (400, 700)
 }
 
 # User credentials and login bypass
@@ -24,6 +26,7 @@ DATABASE_PATH = "database.xlsx"
 main_frame = None
 data = None
 workbook = None
+issue_window = None
 
 class VerticalScrolledFrame(tk.Frame):
     """Scrollable frame with vertical scrolling."""
@@ -55,15 +58,22 @@ def load_data():
     """Load data from the Excel file."""
     workbook = openpyxl.load_workbook(DATABASE_PATH)
     books_sheet = workbook['Books']
+    customers_sheet = workbook["Customers"]
 
     books = []
     for row in books_sheet.iter_rows(min_row=2, values_only=True):
         books.append(row)
-       
+    
+    customers = []
+    for row in customers_sheet.iter_rows(min_row=2, values_only=True):
+        customers.append(row)
+
     workbook.close()
     data = {
-        'books': books
+        'books': books,
+        'customers': customers
     }
+
 
 def save_data():
     workbook.save("database.xlsx")
@@ -93,11 +103,11 @@ def display_login(root):
         else:
             messagebox.showerror("Login Failed", "Invalid username or password.")
 
-    tk.Label(root, text="Library Management System", font=("Helvetica", 24), 
+    tk.Label(root, text="Library Management System", font=("Georgia", 24), 
              bg=COLORS["surface"], fg=COLORS["primary"]).pack(pady=20)
 
     for label_text, show_char in [("Username", None), ("Password", "*")]:
-        tk.Label(root, text=label_text, font=("Helvetica", 12), bg=COLORS["surface"]).pack(pady=10)
+        tk.Label(root, text=label_text, font=("Georgia", 12), bg=COLORS["surface"]).pack(pady=10)
         entry = tk.Entry(root, show=show_char)
         entry.pack(pady=10)
         if label_text == "Username":
@@ -105,7 +115,7 @@ def display_login(root):
         else:
             password_entry = entry
 
-    tk.Button(root, text="Login", font=("Helvetica", 12), bg=COLORS["primary"], 
+    tk.Button(root, text="Login", font=("Georgia", 12), bg=COLORS["primary"], 
               fg="white", command=handle_login).pack(pady=20)
 
 def open_home_page():
@@ -138,7 +148,7 @@ def display_home_page(home, page):
     ]
 
     for text, command in buttons:
-        tk.Button(sidebar, text=text, font=("Helvetica", 12), bg=COLORS["primary"], 
+        tk.Button(sidebar, text=text, font=("Georgia", 12), bg=COLORS["primary"], 
                   fg="white", command=command).pack(fill="x", pady=10)
 
     main_frame = PAGE_GENERATORS.get(page, generate_default_frame)(home)
@@ -147,10 +157,101 @@ def display_home_page(home, page):
 def generate_default_frame(parent):
     """Generate the default frame content."""
     frame = tk.Frame(parent, bg=COLORS["surface"])
-    tk.Label(frame, text="Library Management Software", font=("Helvetica", 24), 
+    tk.Label(frame, text="Library Management Software", font=("Georgia", 24), 
              fg=COLORS["primary"], bg=COLORS["surface"]).place(relx=0.5, rely=0.5, anchor="center")
     return frame
 
+def issue_book(book_customer_frame):
+    book, customer, frame = book_customer_frame
+
+    # TODO Update customer sheet with the fact that a customer has borrowed a book
+    for row in workbook['Books'].iter_rows(min_row=2, max_col=4):
+        if row[1].value == book[1]:
+            workbook['Books'].cell(row[3].row, column=4, value=customer[0])
+            save_data()
+            messagebox.showinfo(f"Issued '{book[1]}'", f"Successfully issued '{book[1]}' to {customer[0]}.")
+            load_data()
+            print(f"Finally: ", frame)
+            frame.destroy()
+            issue_window.destroy()
+
+            break
+    else:
+        messagebox.showerror("Error", f"No row in Excel sheet found with index 1 equal to '{book[1]}'.")
+
+def issue_search(entry, frame, book, window):
+    customers = data['customers']
+
+    for widget in frame.winfo_children():
+        widget.destroy()
+
+    found_customers = False
+    for customer in customers:
+        if customer[0].lower().startswith(entry.get().lower()):
+            found_customers = True
+            tk.Button(frame, text=customer[0], bg=COLORS["primary"], fg=COLORS['surface'], font=("Helvetica", 12), command= lambda book_customer=(book, customer, window): issue_book(book_customer)).pack(padx=20, pady=20)
+
+    if not found_customers:
+        tk.Label(frame, text="No customers found with that name.", bg=COLORS["surface"], fg=COLORS['surface_2'], font=("Helvetica", 12)).pack(padx=20, pady=20)
+
+def open_issue_window(book, main_window):
+    global issue_window
+    window = tk.Toplevel()
+    window.title(f"{book[1]} | Issue")
+    window.configure(bg=COLORS["surface"])
+    center_window(window, *WINDOW_DIMENSIONS["issue_book"])
+    window.focus_force()
+
+    issue_window = window
+
+        
+    tk.Label(window, text="Issue to a customer...", bg=COLORS["surface"], fg=COLORS['primary'], font=("Helvetica", 24)).pack(padx=20, pady=20)
+
+    search_bar = tk.Frame(window, bg=COLORS["surface"])
+    search_bar.pack(fill="x", pady=5, padx=10)
+
+    # Add the text entry box
+    search_entry = tk.Entry(search_bar, font=("Georgia", 12))
+    search_entry.pack(side="left", fill="x", expand=True, padx=(0, 5))
+
+    # Add the search button
+    
+
+    issue_book_search_list = data['customers']
+    customer_frame = tk.Frame(window, bg=COLORS['surface'])
+    customer_frame.pack(fill="both")
+
+    search_button = tk.Button(search_bar, text="Search", font=("Georgia", 12), 
+                               bg=COLORS["primary"], fg="white", command=lambda entry=search_entry: issue_search(entry, customer_frame, book, main_window))
+    search_button.pack(side="right")
+
+    for customer in data['customers']:
+        tk.Button(customer_frame, text=customer[0], bg=COLORS["primary"], fg=COLORS['surface'], font=("Helvetica", 12), command= lambda book_customer=(book, customer, main_window): issue_book(book_customer)).pack(padx=20, pady=20)
+
+def open_book_page(book_isbn):
+    book = None
+    for row in data['books']:
+        if row[0] == book_isbn:
+            book = row
+            break
+    else:
+        messagebox.showerror("Error", "Could not find book.")
+
+    window = tk.Toplevel()
+    window.title(f"{book[1]} | Details")
+    window.configure(bg=COLORS["surface"])
+    center_window(window, *WINDOW_DIMENSIONS["view_book"])
+    window.focus_force()
+
+    tk.Label(window, text=f"{book[1]}", font=("Georgia", 24), bg=COLORS["surface_2"], fg=COLORS["surface"]).pack(fill="x",)
+    tk.Label(window, text=f"Book Details", font=("Georgia", 12), bg=COLORS["surface"], fg=COLORS["primary"]).pack(pady=30)
+    
+    tk.Label(window, text=f"ISBN: {book[0]}", font=("Georgia", 12), bg=COLORS["surface"], fg=COLORS["primary"]).pack(anchor="w", padx=10, pady=10)
+    tk.Label(window, text=f"Title: {book[1]}", font=("Georgia", 12), bg=COLORS["surface"], fg=COLORS["primary"]).pack(anchor="w", padx=10, pady=10)
+    tk.Label(window, text=f"Author: {book[2]}", font=("Georgia", 12), bg=COLORS["surface"], fg=COLORS["primary"]).pack(anchor="w", padx=10, pady=10)
+    
+    tk.Label(window, text=f"This book is currently {'available' if book[3] == 'NULL' else f'borrowed by {book[3]}'}.", font=("Georgia", 12), bg=COLORS["surface"], fg=COLORS["primary"]).pack(pady=30)
+    tk.Button(window, text="Issue Book", bg=COLORS["primary"], fg=COLORS["surface"], font=("Georgia", 12), command=lambda book=book: open_issue_window(book, window)).pack()
 def generate_list_books_frame(parent):
     """Generate the frame displaying a grid of books."""
     frame = tk.Frame(parent, bg=COLORS["surface"])
@@ -159,11 +260,11 @@ def generate_list_books_frame(parent):
     search_bar.pack(fill="x", pady=5, padx=10)
 
     # Add the text entry box
-    search_entry = tk.Entry(search_bar, font=("Helvetica", 12))
+    search_entry = tk.Entry(search_bar, font=("Georgia", 12))
     search_entry.pack(side="left", fill="x", expand=True, padx=(0, 10))
 
     # Add the search button
-    search_button = tk.Button(search_bar, text="Search", font=("Helvetica", 12), 
+    search_button = tk.Button(search_bar, text="Search", font=("Georgia", 12), 
                                bg=COLORS["primary"], fg="white")
     search_button.pack(side="right")
 
@@ -175,9 +276,10 @@ def generate_list_books_frame(parent):
         col = i % 3
         row = i // 3
 
+        bg_color = COLORS["primary"] if i % 2 == 0 else COLORS["surface_2"]
         tk.Button(scrollable.interior, text=f"{book[1]}", 
-                      font=("Helvetica", 12), bg=COLORS["primary"], 
-                      fg="white", width=25).grid(row=row, column=col, padx=5, pady=5)
+                      font=("Georgia", 12), bg=bg_color, 
+                      fg="white", width=25, command=lambda book=book: open_book_page(book[0]) ).grid(row=row, column=col, padx=5, pady=5)
     
 
     return frame
@@ -185,7 +287,7 @@ def generate_list_books_frame(parent):
 def generate_list_customers_frame(parent):
     """Generate a placeholder frame for customer management."""
     frame = tk.Frame(parent, bg=COLORS["surface"])
-    tk.Label(frame, text="Customer Management Coming Soon", font=("Helvetica", 24), 
+    tk.Label(frame, text="Customer Management Coming Soon", font=("Georgia", 24), 
              fg=COLORS["primary"], bg=COLORS["surface"]).place(relx=0.5, rely=0.5, anchor="center")
     return frame
 
@@ -198,8 +300,8 @@ def open_create_book_page():
 
     entries = {}
     for label_text in ["Title", "Author", "ISBN"]:
-        tk.Label(window, text=label_text, font=("Helvetica", 12), bg=COLORS["surface"]).pack(pady=10)
-        entry = tk.Entry(window, font=("Helvetica", 12))
+        tk.Label(window, text=label_text, font=("Georgia", 12), bg=COLORS["surface"]).pack(pady=10)
+        entry = tk.Entry(window, font=("Georgia", 12))
         entry.pack(pady=10)
         entries[label_text.lower()] = entry
 
@@ -208,11 +310,11 @@ def open_create_book_page():
             messagebox.showinfo("Success", "Book created successfully!")
             workbook['Books'].append((entries['isbn'].get(), entries['title'].get(), entries['author'].get(), 'NULL'))
             save_data()
-            print(entries)
+
         else:
             messagebox.showerror("Error", "All fields must be filled.")
 
-    tk.Button(window, text="Create Book", font=("Helvetica", 12), 
+    tk.Button(window, text="Create Book", font=("Georgia", 12), 
               bg=COLORS["primary"], fg="white", command=create_book).pack(pady=20)
 
     
