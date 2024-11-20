@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox
+import openpyxl
 
 # Colors and dimensions
 COLORS = {
@@ -17,9 +18,12 @@ WINDOW_DIMENSIONS = {
 # User credentials and login bypass
 VALID_CREDENTIALS = {"admin": "123"}
 BYPASS_LOGIN = True
+DATABASE_PATH = "database.xlsx"
 
 # Globals
 main_frame = None
+data = None
+workbook = None
 
 class VerticalScrolledFrame(tk.Frame):
     """Scrollable frame with vertical scrolling."""
@@ -44,6 +48,25 @@ class VerticalScrolledFrame(tk.Frame):
     def _on_mousewheel(self, event):
         self.canvas.yview_scroll(-int(event.delta / 120), "units")
 
+def load_data():
+    global data
+    global workbook
+
+    """Load data from the Excel file."""
+    workbook = openpyxl.load_workbook(DATABASE_PATH)
+    books_sheet = workbook['Books']
+
+    books = []
+    for row in books_sheet.iter_rows(min_row=2, values_only=True):
+        books.append(row)
+       
+    workbook.close()
+    data = {
+        'books': books
+    }
+
+def save_data():
+    workbook.save("database.xlsx")
 def center_window(window, width, height):
     """Center a window on the screen."""
     screen_width = window.winfo_screenwidth()
@@ -128,20 +151,38 @@ def generate_default_frame(parent):
              fg=COLORS["primary"], bg=COLORS["surface"]).place(relx=0.5, rely=0.5, anchor="center")
     return frame
 
-def generate_books_frame(parent):
+def generate_list_books_frame(parent):
     """Generate the frame displaying a grid of books."""
     frame = tk.Frame(parent, bg=COLORS["surface"])
+    
+    search_bar = tk.Frame(frame, bg=COLORS["surface"])
+    search_bar.pack(fill="x", pady=5, padx=10)
+
+    # Add the text entry box
+    search_entry = tk.Entry(search_bar, font=("Helvetica", 12))
+    search_entry.pack(side="left", fill="x", expand=True, padx=(0, 10))
+
+    # Add the search button
+    search_button = tk.Button(search_bar, text="Search", font=("Helvetica", 12), 
+                               bg=COLORS["primary"], fg="white")
+    search_button.pack(side="right")
+
     scrollable = VerticalScrolledFrame(frame)
     scrollable.pack(fill="both", expand=True)
+    
 
-    for col in range(100):
-        for row in range(5):
-            tk.Button(scrollable.interior, text=f"Book {col * 4 + row + 1}", 
+    for i, book in enumerate(data["books"]):
+        col = i % 3
+        row = i // 3
+
+        tk.Button(scrollable.interior, text=f"{book[1]}", 
                       font=("Helvetica", 12), bg=COLORS["primary"], 
-                      fg="white", width=10).grid(row=col, column=row, padx=5, pady=5)
+                      fg="white", width=25).grid(row=row, column=col, padx=5, pady=5)
+    
+
     return frame
 
-def generate_customers_frame(parent):
+def generate_list_customers_frame(parent):
     """Generate a placeholder frame for customer management."""
     frame = tk.Frame(parent, bg=COLORS["surface"])
     tk.Label(frame, text="Customer Management Coming Soon", font=("Helvetica", 24), 
@@ -165,23 +206,32 @@ def open_create_book_page():
     def create_book():
         if all(entry.get().strip() for entry in entries.values()):
             messagebox.showinfo("Success", "Book created successfully!")
+            workbook['Books'].append((entries['isbn'].get(), entries['title'].get(), entries['author'].get(), 'NULL'))
+            save_data()
+            print(entries)
         else:
             messagebox.showerror("Error", "All fields must be filled.")
 
     tk.Button(window, text="Create Book", font=("Helvetica", 12), 
               bg=COLORS["primary"], fg="white", command=create_book).pack(pady=20)
 
+    
 PAGE_GENERATORS = {
     "default": generate_default_frame,
-    "books": generate_books_frame,
-    "customers": generate_customers_frame
+    "books": generate_list_books_frame,
+    "customers": generate_list_customers_frame
 }
 
 def run_app():
     """Run the application."""
-    root = create_root()
-    display_login(root)
-    root.mainloop()
+    load_data()
+
+    if not BYPASS_LOGIN:
+        root = create_root()
+        display_login(root)
+        root.mainloop()
+    else:
+        open_home_page()
 
 if __name__ == "__main__":
     run_app()
