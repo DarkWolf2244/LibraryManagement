@@ -189,10 +189,10 @@ def issue_search(entry, frame, book, window):
     for customer in customers:
         if customer[0].lower().startswith(entry.get().lower()):
             found_customers = True
-            tk.Button(frame, text=customer[0], bg=COLORS["primary"], fg=COLORS['surface'], font=("Helvetica", 12), command= lambda book_customer=(book, customer, window): issue_book(book_customer)).pack(padx=20, pady=20)
+            tk.Button(frame, text=customer[0], bg=COLORS["primary"], fg=COLORS['surface'], font=("Georgia", 12), command= lambda book_customer=(book, customer, window): issue_book(book_customer)).pack(padx=20, pady=20)
 
     if not found_customers:
-        tk.Label(frame, text="No customers found with that name.", bg=COLORS["surface"], fg=COLORS['surface_2'], font=("Helvetica", 12)).pack(padx=20, pady=20)
+        tk.Label(frame, text="No customers found with that name.", bg=COLORS["surface"], fg=COLORS['surface_2'], font=("Georgia", 12)).pack(padx=20, pady=20)
 
 def open_issue_window(book, main_window):
     global issue_window
@@ -205,7 +205,7 @@ def open_issue_window(book, main_window):
     issue_window = window
 
         
-    tk.Label(window, text="Issue to a customer...", bg=COLORS["surface"], fg=COLORS['primary'], font=("Helvetica", 24)).pack(padx=20, pady=20)
+    tk.Label(window, text="Issue to a customer...", bg=COLORS["surface"], fg=COLORS['primary'], font=("Georgia", 24)).pack(padx=20, pady=20)
 
     search_bar = tk.Frame(window, bg=COLORS["surface"])
     search_bar.pack(fill="x", pady=5, padx=10)
@@ -226,7 +226,7 @@ def open_issue_window(book, main_window):
     search_button.pack(side="right")
 
     for customer in data['customers']:
-        tk.Button(customer_frame, text=customer[0], bg=COLORS["primary"], fg=COLORS['surface'], font=("Helvetica", 12), command= lambda book_customer=(book, customer, main_window): issue_book(book_customer)).pack(padx=20, pady=20)
+        tk.Button(customer_frame, text=customer[0], bg=COLORS["primary"], fg=COLORS['surface'], font=("Georgia", 12), command= lambda book_customer=(book, customer, main_window): issue_book(book_customer)).pack(padx=20, pady=20)
 
 def open_book_page(book_isbn):
     book = None
