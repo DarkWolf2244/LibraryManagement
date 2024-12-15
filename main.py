@@ -168,6 +168,14 @@ def issue_book(book_customer_frame):
     for row in workbook['Books'].iter_rows(min_row=2, max_col=4):
         if row[1].value == book[1]:
             workbook['Books'].cell(row[3].row, column=4, value=customer[0])
+
+            for c_row in workbook['Customers'].iter_rows(min_row=2):
+                if c_row[0].value == customer[0]:
+                    workbook['Customers'].cell(c_row[1].row, column=2, value=book[0])
+                    break
+            else:
+                messagebox.showerror("Error", f"No row in Excel sheet found with index 1 equal to '{customer[0]}'.")
+
             save_data()
             messagebox.showinfo(f"Issued '{book[1]}'", f"Successfully issued '{book[1]}' to {customer[0]}.")
             load_data()
