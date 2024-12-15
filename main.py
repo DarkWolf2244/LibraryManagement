@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox
 import openpyxl
+from PIL import Image, ImageTk
 
 # Colors and dimensions
 COLORS = {
@@ -30,6 +31,7 @@ main_frame = None
 data = None
 workbook = None
 issue_window = None
+
 
 class VerticalScrolledFrame(tk.Frame):
     """Scrollable frame with vertical scrolling."""
@@ -206,11 +208,18 @@ def generate_default_frame(parent):
     """Generate the default frame content."""
     frame = tk.Frame(parent, bg=COLORS["surface"])
     
+    splash_img = Image.open("splash.png").resize((1000, 800), Image.Resampling.LANCZOS)
+    photo = ImageTk.PhotoImage(splash_img)
+    label = tk.Label(frame, image=photo)
+    label.place(x=0, y=0, relwidth=1, relheight=1)
+    label.image = photo
+
     tk.Label(frame, text=f"Welcome, {LOGGED_IN_USER[0]}.", font=("Georgia", 24), 
              bg=COLORS["surface_2"], fg=COLORS["surface"]).pack( fill="x")
     
     tk.Label(frame, text="Library Management Software", font=("Georgia", 24), 
-             fg=COLORS["primary"], bg=COLORS["surface"]).place(relx=0.5, rely=0.5, anchor="center")
+             fg=COLORS["primary"], bg=COLORS["surface"]).place(relx=0.5, rely=0.3, anchor="center")
+   
 
     return frame
 
