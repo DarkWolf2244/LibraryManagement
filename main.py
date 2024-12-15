@@ -17,11 +17,11 @@ WINDOW_DIMENSIONS = {
     "create_customer": (500, 500),
     "view_book": (500, 500),
     "view_customer": (500, 500),
-    "issue_book": (400, 700)
+    "issue_book": (400, 600)
 }
 
 # User credentials and login bypass
-VALID_CREDENTIALS = {"admin": "123"}
+VALID_CREDENTIALS = {"Admin": "123"}
 BYPASS_LOGIN = True
 DATABASE_PATH = "database.xlsx"
 LOGGED_IN_USER = (None, None)
@@ -101,6 +101,8 @@ def display_login(root):
 
     """Display the login page."""
     def handle_login():
+        global LOGGED_IN_USER
+
         username, password = username_entry.get(), password_entry.get()
         if BYPASS_LOGIN or VALID_CREDENTIALS.get(username) == password:
             LOGGED_IN_USER = (username, password)
@@ -290,15 +292,16 @@ def open_issue_window(book, main_window):
     
 
     issue_book_search_list = data['customers']
-    customer_frame = tk.Frame(window, bg=COLORS['surface'])
-    customer_frame.pack(fill="both")
+    customer_frame = VerticalScrolledFrame(window, bg=COLORS['surface'])
+    customer_frame.pack(fill="y", expand=True)
 
     search_button = tk.Button(search_bar, text="Search", font=("Georgia", 12), 
                                bg=COLORS["primary"], fg="white", command=lambda entry=search_entry: issue_search(entry, customer_frame, book, main_window))
     search_button.pack(side="right")
 
     for customer in data['customers']:
-        tk.Button(customer_frame, text=customer[0], bg=COLORS["primary"], fg=COLORS['surface'], font=("Georgia", 12), command= lambda book_customer=(book, customer, main_window): issue_book(book_customer)).pack(padx=20, pady=20)
+        tk.Button(customer_frame.interior, text=customer[0], bg=COLORS["primary"], fg=COLORS['surface'], font=("Georgia", 12), command= lambda book_customer=(book, customer, main_window): issue_book(book_customer)).pack(padx=20, pady=20, fill="x", )
+        
 
 def open_delete_book_prompt(book, window):
     user_input = messagebox.askyesno("Delete Book", "Are you sure you want to delete this book?")
@@ -307,13 +310,32 @@ def open_delete_book_prompt(book, window):
             if row[0].value == book[0]:
                 workbook['Books'].delete_rows(row[0].row)
                 save_data()
-                messagebox.showinfo("Deleted Book", "Successfully deleted book.")
+                messagebox.showinfo("Deleted Book", "Successfully deleted book. Refresh page to view.")
                 load_data()
                 window.destroy()
                 return
         else:
             messagebox.showerror("Error", "Could not find book.")
-    
+
+def open_return_book_prompt(book, window):
+    user_input = messagebox.askyesno("Return Book", "Are you sure you want to return this book?")
+    if user_input:
+        for row in workbook['Books'].iter_rows(min_row=2):
+            if row[0].value == book[0]:
+                workbook['Books'].cell(row[3].row, column=4, value="NULL")
+
+                for c_row in workbook['Customers'].iter_rows(min_row=2):
+                    if c_row[1].value == book[1]:
+                        workbook['Customers'].cell(c_row[2].row, column=2, value="NULL")
+                        break
+                save_data()
+                messagebox.showinfo("Returned Book", "Successfully returned book.")
+                load_data()
+                window.destroy()
+                return
+        else:
+            messagebox.showerror("Error", "Could not find book.")
+
 def open_book_page(book_isbn):
     book = None
     for row in data['books']:
@@ -338,6 +360,9 @@ def open_book_page(book_isbn):
     
     tk.Label(window, text=f"This book is currently {'available' if book[3] == 'NULL' else f'borrowed by {book[3]}'}.", font=("Georgia", 12), bg=COLORS["surface"], fg=COLORS["primary"]).pack(pady=30)
     tk.Button(window, text="Issue Book", bg=COLORS["primary"], fg=COLORS["surface"], font=("Georgia", 12), command=lambda book=book: open_issue_window(book, window)).pack(pady=10)
+    
+    if book[3] != "NULL":
+        tk.Button(window, text="Return Book", bg=COLORS["primary"], fg=COLORS["surface"], font=("Georgia", 12), command=lambda book=book: open_return_book_prompt(book, window)).pack(pady=10)
     tk.Button(window, text="Delete Book", bg=COLORS["danger"], fg=COLORS["surface"], font=("Georgia", 12), command=lambda book=book: open_delete_book_prompt(book, window)).pack(pady=10)
 def generate_list_books_frame(parent):
     """Generate the frame displaying a grid of books."""
@@ -354,7 +379,7 @@ def generate_list_books_frame(parent):
 
     # Add the search button
     search_button = tk.Button(search_bar, text="Search", font=("Georgia", 12), 
-                               bg=COLORS["primary"], fg="white")
+                               bg=COLORS["primary"], fg="white", command= lambda: messagebox.showerror("Not yet implemented.", "Search functionality has not been implemented yet."))
     search_button.pack(side="right")
 
     scrollable = VerticalScrolledFrame(frame)
@@ -373,6 +398,18 @@ def generate_list_books_frame(parent):
 
     return frame
 
+def open_delete_customer_prompt(customer, window):
+    if messagebox.askyesno("Delete Customer", "Are you sure you want to delete this customer?"):
+        for row in workbook['Customers'].iter_rows(min_row=2):
+            if row[0].value == customer:
+                workbook['Customers'].delete_rows(row[0].row)
+                save_data()
+                messagebox.showinfo("Deleted Customer", "Successfully deleted customer. Refresh page to view.")
+                load_data()
+                window.destroy()
+                return
+        else:
+            messagebox.showerror("Error", "Could not find customer.")
 def open_customer_page(customer_name):
     window = tk.Toplevel()
     window.title(f"{customer_name} | Details")
@@ -403,7 +440,7 @@ def open_customer_page(customer_name):
     tk.Label(window, text=f"Name: {customer_name}", font=("Georgia", 12), bg=COLORS["surface"], fg=COLORS["primary"]).pack(anchor="w", padx=10, pady=10)
     tk.Label(window, text=label1_text, font=("Georgia", 12), bg=COLORS["surface"], fg=COLORS["primary"]).pack(anchor="w", padx=10, pady=10)
     
-    tk.Button(window, text="Delete Customer", bg=COLORS["danger"], fg=COLORS["surface"], font=("Georgia", 12), command=lambda book=book: open_issue_window(book, window)).pack(pady=10)
+    tk.Button(window, text="Delete Customer", bg=COLORS["danger"], fg=COLORS["surface"], font=("Georgia", 12), command=lambda customer=customer_name: open_delete_customer_prompt(customer, window)).pack(pady=10)
 
 def generate_list_customers_frame(parent):
     """Generate a placeholder frame for customer management."""
@@ -420,7 +457,7 @@ def generate_list_customers_frame(parent):
 
     # Add the search button
     search_button = tk.Button(search_bar, text="Search", font=("Georgia", 12), 
-                               bg=COLORS["primary"], fg="white")
+                               bg=COLORS["primary"], fg="white", command= lambda: messagebox.showerror("Not yet implemented.", "Search functionality has not been implemented yet."))
     search_button.pack(side="right")
 
     scrollable = VerticalScrolledFrame(frame)
