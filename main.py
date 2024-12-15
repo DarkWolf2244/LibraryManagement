@@ -223,13 +223,14 @@ def issue_book(book_customer_frame):
                 for b_row in workbook['Books'].iter_rows(min_row=2):
                     if b_row[0].value == c_row[1].value:
                         book_title = b_row[1].value
+                        user_input = messagebox.askyesno("Info", f"Customer {customer[0]} has already borrowed a book, named '{book_title}'. Do you want to return the book and then issue '{book[1]}' to {customer[0]}?")
+                        if not user_input:
+                            return
                         break
                 else:
                     messagebox.showerror("Error", f"No row in Excel sheet found with index 1 equal to '{c_row[1].value}'.")
 
-                user_input = messagebox.askyesno("Info", f"Customer {customer[0]} has already borrowed a book, named '{book_title}'. Do you want to return the book and then issue '{book[1]}' to {customer[0]}?")
-                if not user_input:
-                    return
+                
 
     for row in workbook['Books'].iter_rows(min_row=2, max_col=4):
         if row[1].value == book[1]:
@@ -296,11 +297,11 @@ def open_issue_window(book, main_window):
     customer_frame.pack(fill="y", expand=True)
 
     search_button = tk.Button(search_bar, text="Search", font=("Georgia", 12), 
-                               bg=COLORS["primary"], fg="white", command=lambda entry=search_entry: issue_search(entry, customer_frame, book, main_window))
+                               bg=COLORS["primary"], fg="white", command=lambda entry=search_entry: issue_search(entry, customer_frame.interior, book, main_window))
     search_button.pack(side="right")
 
     for customer in data['customers']:
-        tk.Button(customer_frame.interior, text=customer[0], bg=COLORS["primary"], fg=COLORS['surface'], font=("Georgia", 12), command= lambda book_customer=(book, customer, main_window): issue_book(book_customer)).pack(padx=20, pady=20, fill="x", )
+        tk.Button(customer_frame.interior, text=customer[0], bg=COLORS["primary"], fg=COLORS['surface'], font=("Georgia", 12), command= lambda book_customer=(book, customer, main_window): issue_book(book_customer)).pack(padx=20, pady=20, fill="x", anchor="center")
         
 
 def open_delete_book_prompt(book, window):
