@@ -24,7 +24,7 @@ WINDOW_DIMENSIONS = {
 
 # User credentials and login bypass
 VALID_CREDENTIALS = {"Admin": "123"}
-BYPASS_LOGIN = True
+BYPASS_LOGIN = False
 DATABASE_PATH = "database.xlsx"
 LOGGED_IN_USER = (None, None)
 # Globals
